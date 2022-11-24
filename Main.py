@@ -1,6 +1,8 @@
 import requests
 import pandas as pd
 
+
+
 response = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=MSFT&interval=5min&outputsize=full&apikey=demo")
 
 
@@ -55,11 +57,53 @@ df.info()
 
 df.head()
 
-df[['open', 'high', 'low', 'close']].plot()
+#df[['open', 'high', 'low', 'close']].plot()
 
 #### Resampling
 
 # Let's take last value of the close column for every business day
 close_per_day = df.close.resample('B').last()
 
-close_per_day.plot()
+import matplotlib.pyplot as plt
+#close_per_day.plt.show()
+
+
+price = df['close'][2]
+owned_stocks = {'TSLA': 0, 'TWTR':0, 'NFLX':0}
+
+stockinfo = {"stock_name": '', "quantity": 0, "money": 0}
+
+userinfo = {'total_balance': 1000}
+def buy_stock(price, stock):
+    choice = int(input('Enter buying quantity: '))
+    cost = choice * price
+    stockinfo['quantity'] += choice
+    stockinfo['money'] += cost
+    stockinfo['stock_name'] = stock
+    userinfo['total_balance'] -= cost
+
+buy_stock(price, 'TSLA')
+print(stockinfo, userinfo)
+
+def sell_stock(price, stock):
+    choice = int(input('Enter selling quantity: '))
+    cost = choice * price
+    stockinfo['quantity'] -= choice
+    stockinfo['money'] -= cost
+    stockinfo['stock_name'] = stock
+    userinfo['total_balance'] += cost
+
+
+sell_stock(price, 'TSLA')
+print(stockinfo, userinfo)
+
+def limit_stock(price, stock, threshold):
+    if price <= threshold:
+        buy_stock(price, stock)
+    else:
+        print("It's too expensive girl, don't buy...sell!")
+        sell_stock(price,stock)
+
+
+limit_stock(price, 'TSLA', 100)
+print(stockinfo, userinfo)
