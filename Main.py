@@ -3,6 +3,8 @@ import pandas as pd
 
 response = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=MSFT&interval=5min&outputsize=full&apikey=demo")
 
+
+
 # Since we are retrieving stuff from a web service, it's a good idea to check for the return status code
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 if response.status_code != 200:
@@ -11,3 +13,53 @@ if response.status_code != 200:
 # The service sends JSON data, we parse that into a Python datastructure
 raw_data = response.json()
 
+raw_data.keys()
+
+# Let's look at the first key/value.
+# This is just some descriptive information
+raw_data['Meta Data']
+
+# The other key/value pair is the actual time series.
+# This is a dict as well
+time_series = raw_data['Time Series (5min)']
+print(type(time_series))
+
+print(len(time_series))
+
+# Let's take the first few keys
+first_ten_keys = list(time_series.keys())[:10]
+
+# And see the corresponding values
+first_ten_items = [f"{key}: {time_series[key]}" for key in first_ten_keys ]
+print("\n".join(first_ten_items))
+
+
+#########################################
+########## CREATING DATAFRAME ###########
+#########################################
+
+
+data = raw_data['Time Series (5min)']
+df = pd.DataFrame(data).T.apply(pd.to_numeric)
+df.info()
+df.head()
+print(df)
+
+# Next we parse the index to create a datetimeindex
+df.index = pd.DatetimeIndex(df.index)
+
+# Let's fix the column names by chopping off the first 3 characters
+df.rename(columns=lambda s: s[3:], inplace=True)
+
+df.info()
+
+df.head()
+
+df[['open', 'high', 'low', 'close']].plot()
+
+#### Resampling
+
+# Let's take last value of the close column for every business day
+close_per_day = df.close.resample('B').last()
+
+close_per_day.plot()
