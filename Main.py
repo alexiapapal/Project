@@ -70,10 +70,18 @@ import matplotlib.pyplot as plt
 
 price = df['close'][2]
 owned_stocks = {'TSLA': 0, 'TWTR':0, 'NFLX':0}
+users = []
 
 stockinfo = {"stock_name": '', "quantity": 0, "money": 0}
-
 userinfo = {'total_balance': 1000}
+
+stockinfo2 = {"stock_name": '', "quantity": 1, "money": 0}
+userinfo2 = {'total_balance': 10}
+
+users = ["Person 1:", [stockinfo, userinfo], "Person 2:", [stockinfo2, userinfo2]]
+
+print(users)
+
 def buy_stock(price, stock):
     choice = int(input('Enter buying quantity: '))
     cost = choice * price
@@ -107,3 +115,17 @@ def limit_stock(price, stock, threshold):
 
 limit_stock(price, 'TSLA', 100)
 print(stockinfo, userinfo)
+
+def stop_oder(price, stock, stop_threshold):
+        if price == stop_threshold:
+            print("You can buy or sell the stocks.")
+            user_input = input("Please give a buy or sell argument: ")
+            if user_input == "buy":
+                buy_stock(price, stock)
+            else:
+                sell_stock(price, stock)
+        else:
+            print("The stock threshold has not been reached yet.")
+stop_oder(price, 'TSLA', price)
+print(stockinfo,userinfo)
+
