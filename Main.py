@@ -1,117 +1,75 @@
 import requests
 import pandas as pd
 
-
 import requests
 
-
-stock = "MSFT"
-response = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+stock+"&interval=5min&outputsize=full&apikey=demo")
-print(response)
-
-# Since we are retrieving stuff from a web service, it's a good idea to check for the return status code
-# See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-if response.status_code != 200:
-    raise ValueError("Could not retrieve data, code:", response.status_code)
-
-# The service sends JSON data, we parse that into a Python datastructure
-raw_data = response.json()
-
-#raw_data.keys()
-# Let's look at the first key/value.
-# This is just some descriptive information
-# raw_data['Meta Data']
-
-# The other key/value pair is the actual time series.
-# This is a dict as well
-# time_series = raw_data['Time Series (5min)']
-# print(type(time_series))
-#
-# print(len(time_series))
-#
-# # Let's take the first few keys
-# first_ten_keys = list(time_series.keys())[:10]
-#
-# # And see the corresponding values
-# first_ten_items = [f"{key}: {time_series[key]}" for key in first_ten_keys ]
-# print("\n".join(first_ten_items))
-
-
-#########################################
-########## CREATING DATAFRAME ###########
-#########################################
-
-
-data = raw_data['Time Series (5min)']
-df = pd.DataFrame(data).T.apply(pd.to_numeric)
-df.info()
-df.head()
-print(df)
-
-# Next we parse the index to create a datetimeindex
-df.index = pd.DatetimeIndex(df.index)
-
-# Let's fix the column names by chopping off the first 3 characters
-df.rename(columns=lambda s: s[3:], inplace=True)
-
-df.info()
-
-df.head()
-
-df[['open', 'high', 'low', 'close']].plot()
-
-#### Resampling
-
-# Let's take last value of the close column for every business day
-close_per_day = df.close.resample('B').last()
-
-import matplotlib.pyplot as plt
-#close_per_day.plt.show()
-
-
-stock_price = {
-    "MSFT" : 10,
-    "APPLE" : 15,
-    "TSLA" : 5,
-    "BITCOIN" : 100
-}
-
-
 users_info = {
-    "Alexia": {"balance":10000, "portfolio":{}},
-    "Chrisopher": {"balance":10000, "portfolio":{}},
-    "Michelle": {"balance":10000, "portfolio":{}}
+    "Alexia": {"balance (EUR)":10000, "portfolio":{}},
+    "Christopher": {"balance (EUR)":10000, "portfolio":{}},
+    "Michelle": {"balance (EUR)":10000, "portfolio":{}}
 }
 
-
+fx_rates = {
+    "USD/EUR": 0.96,
+    "DKK/EUR": 0.13,
+    "GBP/EUR": 1.16
+}
 
 def buy_stock():
     stock = input("which stock? ")
-    if stock in stock_price:
-        price = stock_price[stock]
-    else:
-        print("This does not exists")
+    response = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=" + stock + "&interval=5min&outputsize=full&apikey=KOA81QCGI4HZS0CJ")
+    raw_data = response.json()
+    stock_price = int(float(raw_data['Time Series (5min)']['2022-11-23 17:40:00']['4. close']))
     quant = int(input('Enter buying quantity: '))
-    # remember that these stock are not owned by the user
-    print(price*quant)
+    response_cur = requests.get(
+        "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" + stock + "&apikey=KOA81QCGI4HZS0CJ")
+    raw_data_cur = response_cur.json()
+    stock_cur = raw_data_cur["bestMatches"][0]["8. currency"]
 
-    users_info[current_user]['portfolio'][stock] = quant
-    users_info[current_user]['balance'] -= price * quant
+    # remember that these stock are not owned by the user
+    print(stock_price*quant)
+
+    users_info[current_user]['portfolio'][stock] += quant
+
+    if stock_cur == "USD":
+        eur_stock_price = fx_rates["USD/EUR"] * stock_price
+        users_info[current_user]['balance (EUR)'] += eur_stock_price * quant
+    elif stock_cur == "DKK":
+        dkk_stock_price = fx_rates["DKK/EUR"] * stock_price
+        users_info[current_user]['balance (EUR)'] += dkk_stock_price * quant
+    elif stock_cur == "GBP":
+        gbp_stock_price = fx_rates["DKK/EUR"] * stock_price
+        users_info[current_user]['balance (EUR)'] += gbp_stock_price * quant
+    else:
+        print("currency not found")
 
 def sell_stock():
     stock = input("which stock? ")
-    if stock in stock_price:
-        price = stock_price[stock]
-    else:
-        print("This does not exists")
-    quant = int(input('Enter buying quantity: '))
+    response = requests.get(
+        "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=" + stock + "&interval=5min&outputsize=full&apikey=KOA81QCGI4HZS0CJ")
+    raw_data = response.json()
+    stock_price = int(float(raw_data['Time Series (5min)']['2022-11-23 17:40:00']['4. close']))
+    print(stock_price)
+    quant = int(input('Enter selling quantity: '))
     # remember that these stock are not owned by the user
-    print(price*quant)
-
     users_info[current_user]['portfolio'][stock] -= quant
-    users_info[current_user]['balance'] += price * quant
+    response_cur = requests.get(
+        "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" + stock + "&apikey=KOA81QCGI4HZS0CJ")
+    raw_data_cur = response_cur.json()
+    stock_cur = raw_data_cur["bestMatches"][0]["8. currency"]
+    print(stock_cur)
 
-
+    if stock_cur == "USD":
+        eur_stock_price = fx_rates["USD/EUR"]*stock_price
+        users_info[current_user]['balance (EUR)'] += eur_stock_price * quant
+    elif stock_cur == "DKK":
+        dkk_stock_price = fx_rates["DKK/EUR"] * stock_price
+        users_info[current_user]['balance (EUR)'] += dkk_stock_price * quant
+    elif stock_cur == "GBP":
+        gbp_stock_price = fx_rates["DKK/EUR"] * stock_price
+        users_info[current_user]['balance (EUR)'] += gbp_stock_price * quant
+    else:
+        print("currency not found")
 
 
 name = input("What is your name?")
@@ -128,32 +86,3 @@ while True:
     elif choice == "quit":
         break
     print(users_info)
-
-
-
-
-
-
-
-# buy_stock(price, 'TSLA')
-# print(stockinfo, userinfo)
-
-
-
-
-
-#
-# sell_stock(price, 'TSLA')
-# print(stockinfo, userinfo)
-#
-#
-#
-#
-# limit_stock(price, 'TSLA', 100)
-# print(stockinfo, userinfo)
-#
-#
-#
-# stop_order(price, 'TSLA', price)
-# print(stockinfo,userinfo)
-
