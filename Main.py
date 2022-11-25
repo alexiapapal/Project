@@ -2,10 +2,12 @@ import requests
 import pandas as pd
 
 
+import requests
 
-response = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=MSFT&interval=5min&outputsize=full&apikey=demo")
 
-
+stock = "MSFT"
+response = requests.get("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol="+stock+"&interval=5min&outputsize=full&apikey=demo")
+print(response)
 
 # Since we are retrieving stuff from a web service, it's a good idea to check for the return status code
 # See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
@@ -15,25 +17,24 @@ if response.status_code != 200:
 # The service sends JSON data, we parse that into a Python datastructure
 raw_data = response.json()
 
-raw_data.keys()
-
+#raw_data.keys()
 # Let's look at the first key/value.
 # This is just some descriptive information
-raw_data['Meta Data']
+# raw_data['Meta Data']
 
 # The other key/value pair is the actual time series.
 # This is a dict as well
-time_series = raw_data['Time Series (5min)']
-print(type(time_series))
-
-print(len(time_series))
-
-# Let's take the first few keys
-first_ten_keys = list(time_series.keys())[:10]
-
-# And see the corresponding values
-first_ten_items = [f"{key}: {time_series[key]}" for key in first_ten_keys ]
-print("\n".join(first_ten_items))
+# time_series = raw_data['Time Series (5min)']
+# print(type(time_series))
+#
+# print(len(time_series))
+#
+# # Let's take the first few keys
+# first_ten_keys = list(time_series.keys())[:10]
+#
+# # And see the corresponding values
+# first_ten_items = [f"{key}: {time_series[key]}" for key in first_ten_keys ]
+# print("\n".join(first_ten_items))
 
 
 #########################################
@@ -57,7 +58,7 @@ df.info()
 
 df.head()
 
-#df[['open', 'high', 'low', 'close']].plot()
+df[['open', 'high', 'low', 'close']].plot()
 
 #### Resampling
 
@@ -68,64 +69,91 @@ import matplotlib.pyplot as plt
 #close_per_day.plt.show()
 
 
-price = df['close'][2]
-owned_stocks = {'TSLA': 0, 'TWTR':0, 'NFLX':0}
-users = []
-
-stockinfo = {"stock_name": '', "quantity": 0, "money": 0}
-userinfo = {'total_balance': 1000}
-
-stockinfo2 = {"stock_name": '', "quantity": 1, "money": 0}
-userinfo2 = {'total_balance': 10}
-
-users = ["Person 1:", [stockinfo, userinfo], "Person 2:", [stockinfo2, userinfo2]]
-
-print(users)
-
-def buy_stock(price, stock):
-    choice = int(input('Enter buying quantity: '))
-    cost = choice * price
-    stockinfo['quantity'] += choice
-    stockinfo['money'] += cost
-    stockinfo['stock_name'] = stock
-    userinfo['total_balance'] -= cost
-
-buy_stock(price, 'TSLA')
-print(stockinfo, userinfo)
-
-def sell_stock(price, stock):
-    choice = int(input('Enter selling quantity: '))
-    cost = choice * price
-    stockinfo['quantity'] -= choice
-    stockinfo['money'] -= cost
-    stockinfo['stock_name'] = stock
-    userinfo['total_balance'] += cost
+stock_price = {
+    "MSFT" : 10,
+    "APPLE" : 15,
+    "TSLA" : 5,
+    "BITCOIN" : 100
+}
 
 
-sell_stock(price, 'TSLA')
-print(stockinfo, userinfo)
+users_info = {
+    "Alexia": {"balance":10000, "portfolio":{}},
+    "Chrisopher": {"balance":10000, "portfolio":{}},
+    "Michelle": {"balance":10000, "portfolio":{}}
+}
 
-def limit_stock(price, stock, threshold):
-    if price <= threshold:
-        buy_stock(price, stock)
+
+
+def buy_stock():
+    stock = input("which stock? ")
+    if stock in stock_price:
+        price = stock_price[stock]
     else:
-        print("It's too expensive girl, don't buy...sell!")
-        sell_stock(price,stock)
+        print("This does not exists")
+    quant = int(input('Enter buying quantity: '))
+    # remember that these stock are not owned by the user
+    print(price*quant)
+
+    users_info[current_user]['portfolio'][stock] = quant
+    users_info[current_user]['balance'] -= price * quant
+
+def sell_stock():
+    stock = input("which stock? ")
+    if stock in stock_price:
+        price = stock_price[stock]
+    else:
+        print("This does not exists")
+    quant = int(input('Enter buying quantity: '))
+    # remember that these stock are not owned by the user
+    print(price*quant)
+
+    users_info[current_user]['portfolio'][stock] -= quant
+    users_info[current_user]['balance'] += price * quant
 
 
-limit_stock(price, 'TSLA', 100)
-print(stockinfo, userinfo)
 
-def stop_oder(price, stock, stop_threshold):
-        if price == stop_threshold:
-            print("You can buy or sell the stocks.")
-            user_input = input("Please give a buy or sell argument: ")
-            if user_input == "buy":
-                buy_stock(price, stock)
-            else:
-                sell_stock(price, stock)
-        else:
-            print("The stock threshold has not been reached yet.")
-stop_oder(price, 'TSLA', price)
-print(stockinfo,userinfo)
+
+name = input("What is your name?")
+current_user = name
+while True:
+    choice = input("What do you want to do? (buy/sell/new_user/quit) ")
+    if choice == "buy":
+        buy_stock()
+    elif choice == "sell":
+        sell_stock()
+    elif choice == "new_user":
+        name = input("What is your name?")
+        current_user = name
+    elif choice == "quit":
+        break
+    print(users_info)
+
+
+
+
+
+
+
+# buy_stock(price, 'TSLA')
+# print(stockinfo, userinfo)
+
+
+
+
+
+#
+# sell_stock(price, 'TSLA')
+# print(stockinfo, userinfo)
+#
+#
+#
+#
+# limit_stock(price, 'TSLA', 100)
+# print(stockinfo, userinfo)
+#
+#
+#
+# stop_order(price, 'TSLA', price)
+# print(stockinfo,userinfo)
 
