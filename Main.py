@@ -28,18 +28,20 @@ def buy_stock():
 
     # remember that these stock are not owned by the user
     print(stock_price*quant)
-
-    users_info[current_user]['portfolio'][stock] += quant
+    if stock in users_info[current_user]['portfolio']:
+        users_info[current_user]['portfolio'][stock] += quant
+    else:
+        users_info[current_user]['portfolio'][stock] = quant
 
     if stock_cur == "USD":
         eur_stock_price = fx_rates["USD/EUR"] * stock_price
-        users_info[current_user]['balance (EUR)'] += eur_stock_price * quant
+        users_info[current_user]['balance (EUR)'] -= eur_stock_price * quant
     elif stock_cur == "DKK":
         dkk_stock_price = fx_rates["DKK/EUR"] * stock_price
-        users_info[current_user]['balance (EUR)'] += dkk_stock_price * quant
+        users_info[current_user]['balance (EUR)'] -= dkk_stock_price * quant
     elif stock_cur == "GBP":
         gbp_stock_price = fx_rates["DKK/EUR"] * stock_price
-        users_info[current_user]['balance (EUR)'] += gbp_stock_price * quant
+        users_info[current_user]['balance (EUR)'] -= gbp_stock_price * quant
     else:
         print("currency not found")
 
