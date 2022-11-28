@@ -9,8 +9,8 @@ fx_rates = {
 #
 # input:
 # users_info: dictionary consisting of mulitple users information
-# current_user: string with a user name from the users info
-
+# current_user: string with a user name from the users info#
+# output
 
 def buy_stock(users_info, current_user):
     keyword = input("Give keyword (symbol/name)")
