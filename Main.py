@@ -88,3 +88,28 @@ while True:
     elif choice == "quit":
         break
     print(users_info)
+
+import requests
+keyword = input("Give keyword (symbol/name)")
+# replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
+url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=" + keyword + "&apikey=KOA81QCGI4HZS0CJ"
+r = requests.get(url)
+data = r.json()
+
+#print(data)
+
+print(data["bestMatches"])
+for i in data["bestMatches"]:
+    print(data["bestMatches"][])
+#print(data)
+#'FRD'
+def fund():
+    my_list = list(cr)
+    symbol = input("Give the symbol: ")
+ #   for symbol in my_list[0]:
+    print(f"The information is: {my_list[0:6]}")
+
+fund()
+print(my_list[0][0])
+
+
